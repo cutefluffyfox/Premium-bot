@@ -24,7 +24,7 @@ def is_premium(json: dict) -> bool:
 
 @dp.inline_handler()
 async def inline_echo(inline_query: InlineQuery):
-    text = inline_query.query or 'Enter text'
+    text = inline_query.query
     raw_json: dict = loads(inline_query.from_user.as_json())
 
     markup = InlineKeyboardMarkup()
