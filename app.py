@@ -24,7 +24,7 @@ def is_premium(json: dict) -> bool:
 
 @dp.inline_handler()
 async def inline_echo(inline_query: InlineQuery):
-    text = inline_query.query
+    text = inline_query.query.strip()
     raw_json: dict = loads(inline_query.from_user.as_json())
 
     markup = InlineKeyboardMarkup()
@@ -38,8 +38,8 @@ async def inline_echo(inline_query: InlineQuery):
             f'This message is only available for *Telegram Premium*™ users',
             parse_mode='Markdown'
         ),
-        description=text,
-        reply_markup=markup,
+        description='You are a premium user, this message will be available only to premium users',
+        reply_markup=markup,  # Limit 32 characters, todo make it to 200
         thumb_url='https://i.imgur.com/FkPJjhk.jpg',
     )
     non_premium_item = InlineQueryResultArticle(
@@ -52,7 +52,8 @@ async def inline_echo(inline_query: InlineQuery):
         description='You are not a premium user, your message will be available for everyone',
         thumb_url='https://i.imgur.com/FkPJjhk.jpg',
     )
-    await inline_query.answer([premium_item if is_premium(raw_json) else non_premium_item])
+    if text:
+        await inline_query.answer([premium_item if is_premium(raw_json) else non_premium_item])
 
 
 @dp.callback_query_handler()
