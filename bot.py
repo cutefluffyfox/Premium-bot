@@ -65,4 +65,4 @@ async def question_menu_callback(callback_query: CallbackQuery):
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_webhook(dp, skip_updates=True, webhook_path='https://premium-bot-exjwib.codecapsules.co.za/')
