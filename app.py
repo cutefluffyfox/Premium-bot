@@ -1,4 +1,4 @@
-from os import getenv
+from os import getenv, environ
 import hashlib
 import logging
 from json import loads
@@ -10,11 +10,11 @@ from aiogram.types import CallbackQuery
 import dotenv
 
 dotenv.load_dotenv(dotenv.find_dotenv())
-API_TOKEN = getenv('BOT_TOKEN')
+BOT_TOKEN = getenv('BOT_TOKEN')
 
 logging.basicConfig(level=logging.INFO)
 
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
 
@@ -65,4 +65,4 @@ async def question_menu_callback(callback_query: CallbackQuery):
 
 
 if __name__ == '__main__':
-    executor.start_webhook(dp, skip_updates=True, webhook_path='https://premium-bot-exjwib.codecapsules.co.za/')
+    executor.start_polling(dp, skip_updates=True)
