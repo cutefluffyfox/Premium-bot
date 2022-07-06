@@ -1,3 +1,4 @@
+import asyncio
 from os import getenv, environ
 import hashlib
 import logging
@@ -69,14 +70,17 @@ async def question_menu_callback(callback_query: CallbackQuery):
 async def remove_keyboard(message: Message):
     sample_markup = ReplyKeyboardMarkup(one_time_keyboard=False)
     sample_markup.add(KeyboardButton('/remove_keyboard'))
-    await message.answer(
+    message1 = await message.answer(
         text='Set new keyboard',
         reply_markup=sample_markup
     )
-    await message.answer(
+    await asyncio.sleep(0.5)
+    message2 = await message.answer(
         text='Deleted keyboard',
         reply_markup=ReplyKeyboardRemove()
     )
+    await bot.delete_message(chat_id=message1.chat.id, message_id=message1.message_id)
+    await bot.delete_message(chat_id=message2.chat.id, message_id=message2.message_id)
 
 
 if __name__ == '__main__':
