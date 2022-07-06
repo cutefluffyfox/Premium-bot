@@ -67,8 +67,14 @@ async def question_menu_callback(callback_query: CallbackQuery):
 
 @dp.message_handler(commands=['remove_keyboard'])
 async def remove_keyboard(message: Message):
+    sample_markup = ReplyKeyboardMarkup(one_time_keyboard=False)
+    sample_markup.add(KeyboardButton('/remove_keyboard'))
     await message.answer(
-        text='Your keyboard deleted',
+        text='Set new keyboard',
+        reply_markup=sample_markup
+    )
+    await message.answer(
+        text='Deleted keyboard',
         reply_markup=ReplyKeyboardRemove()
     )
 
