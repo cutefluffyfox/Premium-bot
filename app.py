@@ -5,8 +5,8 @@ from json import loads
 
 from aiogram import Bot, Dispatcher, executor
 from aiogram.types import InlineQuery, InputTextMessageContent, InlineQueryResultArticle, InlineQueryResultPhoto
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.types import CallbackQuery
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message
 import dotenv
 
 dotenv.load_dotenv(dotenv.find_dotenv())
@@ -32,7 +32,7 @@ async def inline_echo(inline_query: InlineQuery):
     result_id: str = hashlib.md5(text.encode()).hexdigest()
 
     premium_item = InlineQueryResultArticle(
-        id=result_id,
+        id='prem',
         title=f'Send message for premium users',
         input_message_content=InputTextMessageContent(
             f'This message is only available for *Telegram Premium*™ users',
@@ -43,7 +43,7 @@ async def inline_echo(inline_query: InlineQuery):
         thumb_url='https://i.imgur.com/FkPJjhk.jpg',
     )
     non_premium_item = InlineQueryResultArticle(
-        id=result_id,
+        id='non-prem',
         title=f'Send message for premium users:',
         input_message_content=InputTextMessageContent(
             'I am *NOT a premium* user, so here is my message:\n\n' + text,
@@ -63,6 +63,14 @@ async def question_menu_callback(callback_query: CallbackQuery):
         await callback_query.answer(callback_query.data, show_alert=True)
     else:
         await callback_query.answer('You must subscribe to Telegram Premium™ to read this message', show_alert=True)
+
+
+@dp.message_handler(commands=['/remove_keyboard'])
+async def remove_keyboard(message: Message):
+    await message.answer(
+        text='Your keyboard deleted',
+        reply_markup=ReplyKeyboardRemove()
+    )
 
 
 if __name__ == '__main__':
