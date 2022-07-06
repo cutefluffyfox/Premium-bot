@@ -5,7 +5,7 @@ from json import loads
 
 from aiogram import Bot, Dispatcher, executor
 from aiogram.types import InlineQuery, InputTextMessageContent, InlineQueryResultArticle, InlineQueryResultPhoto
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import CallbackQuery, Message
 import dotenv
 
@@ -65,7 +65,7 @@ async def question_menu_callback(callback_query: CallbackQuery):
         await callback_query.answer('You must subscribe to Telegram Premium™ to read this message', show_alert=True)
 
 
-@dp.message_handler(commands=['/remove_keyboard'])
+@dp.message_handler(commands=['remove_keyboard'])
 async def remove_keyboard(message: Message):
     await message.answer(
         text='Your keyboard deleted',
