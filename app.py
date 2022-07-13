@@ -50,7 +50,7 @@ async def inline_echo(inline_query: InlineQuery):
             description='Write some text that you want to send to premium users',
             thumb_url='https://i.imgur.com/FkPJjhk.jpg'
         )
-        await inline_query.answer([write_message])
+        await inline_query.answer([write_message], cache_time=0)
     elif len(text) > 200:
         too_long = InlineQueryResultArticle(
             id='empty',
@@ -59,7 +59,7 @@ async def inline_echo(inline_query: InlineQuery):
             description='Message should not be longer than 200 symbols',
             thumb_url='https://i.imgur.com/9G9BpSH.jpg'
         )
-        await inline_query.answer([too_long])
+        await inline_query.answer([too_long], cache_time=0)
     elif is_premium(raw_json):
         premium_item = InlineQueryResultArticle(
             id='prem',
@@ -73,7 +73,7 @@ async def inline_echo(inline_query: InlineQuery):
             thumb_url='https://i.imgur.com/FkPJjhk.jpg',
         )
         temp_memory[inline_query.from_user.id] = text
-        await inline_query.answer([premium_item])
+        await inline_query.answer([premium_item], cache_time=0)
     else:
         non_premium_item = InlineQueryResultArticle(
             id='non-prem',
@@ -86,7 +86,7 @@ async def inline_echo(inline_query: InlineQuery):
             description='You are not a premium user, your message will be available for everyone',
             thumb_url='https://i.imgur.com/FkPJjhk.jpg',
         )
-        await inline_query.answer([non_premium_item])
+        await inline_query.answer([non_premium_item], cache_time=0)
 
 
 @dp.chosen_inline_handler()
