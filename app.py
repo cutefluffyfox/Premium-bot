@@ -51,7 +51,7 @@ async def inline_echo(inline_query: InlineQuery):
             thumb_url='https://i.imgur.com/FkPJjhk.jpg'
         )
         await inline_query.answer([write_message], cache_time=0)
-    elif len(text) > 200:
+    elif len(text) >= 200:
         too_long = InlineQueryResultArticle(
             id='empty',
             title=f'Your message is too long',
