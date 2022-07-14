@@ -47,23 +47,38 @@ async def inline_echo(inline_query: InlineQuery):
         await inline_query.answer([inline_messages.TOO_LONG], cache_time=0)
     elif is_premium(raw_json):
         temp_memory[user_id] = text
-        await inline_query.answer([inline_messages.PREMIUM_MESSAGE], cache_time=0)
+        await inline_query.answer([inline_messages.PREMIUM_MESSAGE, inline_messages.LIMITED_READ_MESSAGE], cache_time=0)
     else:
         temp_memory[user_id] = text
-        await inline_query.answer([inline_messages.BROKE_MESSAGE], cache_time=0)
+        await inline_query.answer([inline_messages.BROKE_MESSAGE, inline_messages.LIMITED_READ_MESSAGE], cache_time=0)
 
 
 @dp.chosen_inline_handler()
 async def chosen_result(chosen_inline: ChosenInlineResult):
     result_id = chosen_inline.result_id
     inline_id = chosen_inline.inline_message_id
-    if result_id not in ['prem', 'non-prem'] or inline_id is None:
+    if result_id not in ['prem', 'non-prem', 'limited'] or inline_id is None:
         return
     user_id = chosen_inline.from_user.id
     raw_json: dict = loads(chosen_inline.from_user.as_json())
+    text = temp_memory[user_id]
+
+    amount = None
+    if result_id == 'limited':
+        amount = 1
+        words = text.split()
+        if len(words) >= 2 and words[0].isdigit():
+            text = text[len(words[0]) + 1:]
+            amount = int(words[0])
 
     ref = db.reference('/messages')
-    key = ref.push({'text': temp_memory[user_id], 'premium': is_premium(raw_json)}).key
+    key = ref.push(
+        {
+            'text': text,
+            'premium': is_premium(raw_json),
+            'amount': amount
+        }
+    ).key
 
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton(text='Read this message', callback_data=key))
@@ -74,12 +89,21 @@ async def chosen_result(chosen_inline: ChosenInlineResult):
 async def question_menu_callback(callback_query: CallbackQuery):
     raw_json: dict = loads(callback_query.from_user.as_json())
     callback_data = callback_query.data
-    message: OrderedDict = db.reference('/messages/' + callback_data).get()
+    ref = db.reference('/messages/' + callback_data)
+    message: dict = ref.get()
 
-    if callback_data == 'wait':
+    if callback_data == 'wait' or type(message) != dict:
         await callback_query.answer('Please wait a second to see the result', show_alert=False)
+    elif (message.get('amount') is not None) and (message.get('amount') > 0):
+        await callback_query.answer(message.get('text'), show_alert=True)
+        new_amount = message.get('amount') - 1
+        ref.update({'amount': new_amount})
+        if new_amount <= 0:
+            await bot.edit_message_text(inline_message_id=callback_query.inline_message_id, text="This message exceeded it's limit")
+    elif message.get('amount') is not None and message.get('amount') <= 0:
+        await callback_query.answer("This message exceeded it's limit", show_alert=True)
     elif is_premium(raw_json) == message.get('premium', True):
-        await callback_query.answer(str(message.get('text')), show_alert=True)
+        await callback_query.answer(message.get('text'), show_alert=True)
     elif is_premium(raw_json):
         await callback_query.answer('You are too rich to read this message', show_alert=True)
     else:
