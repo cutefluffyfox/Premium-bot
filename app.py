@@ -2,18 +2,19 @@ import asyncio
 from os import getenv
 import logging
 from json import loads
-
+from collections import OrderedDict
 
 from aiogram import Bot, Dispatcher, executor
 from aiogram.types import InlineQuery, InputTextMessageContent, InlineQueryResultArticle, ChosenInlineResult
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup, \
+    KeyboardButton
 from aiogram.types import CallbackQuery, Message
 
 import firebase_admin
 from firebase_admin import db
+import inline_messages
 
 import dotenv
-
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 BOT_TOKEN = getenv('BOT_TOKEN')
@@ -35,70 +36,34 @@ def is_premium(json: dict) -> bool:
 
 @dp.inline_handler()
 async def inline_echo(inline_query: InlineQuery):
+    user_id = inline_query.from_user.id
     text = inline_query.query.strip()
     raw_json: dict = loads(inline_query.from_user.as_json())
     temp_memory[inline_query.from_user.id] = ''
 
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(text='Read this message', callback_data='wait'))
-
     if len(text) == 0:
-        write_message = InlineQueryResultArticle(
-            id='empty',
-            title=f'Send message for premium users',
-            input_message_content=InputTextMessageContent("Enter message"),
-            description='Write some text that you want to send to premium users',
-            thumb_url='https://i.imgur.com/FkPJjhk.jpg'
-        )
-        await inline_query.answer([write_message], cache_time=0)
+        await inline_query.answer([inline_messages.EMPTY_MESSAGE], cache_time=0)
     elif len(text) >= 200:
-        too_long = InlineQueryResultArticle(
-            id='empty',
-            title=f'Your message is too long',
-            input_message_content=InputTextMessageContent("Message should not be longer than 200 symbols"),
-            description='Message should not be longer than 200 symbols',
-            thumb_url='https://i.imgur.com/9G9BpSH.jpg'
-        )
-        await inline_query.answer([too_long], cache_time=0)
+        await inline_query.answer([inline_messages.TOO_LONG], cache_time=0)
     elif is_premium(raw_json):
-        premium_item = InlineQueryResultArticle(
-            id='prem',
-            title=f'Send message for premium users',
-            input_message_content=InputTextMessageContent(
-                f'This message is only available for *Telegram Premium*™ users',
-                parse_mode='Markdown'
-            ),
-            reply_markup=markup,
-            description='You are a premium user, this message will be available only to premium users',
-            thumb_url='https://i.imgur.com/FkPJjhk.jpg',
-        )
-        temp_memory[inline_query.from_user.id] = text
-        await inline_query.answer([premium_item], cache_time=0)
+        temp_memory[user_id] = text
+        await inline_query.answer([inline_messages.PREMIUM_MESSAGE], cache_time=0)
     else:
-        non_premium_item = InlineQueryResultArticle(
-            id='non-prem',
-            title=f'Send message for premium users:',
-            input_message_content=InputTextMessageContent(
-                'I am *NOT a premium* user, so here is my message:\n\n' + text,
-                parse_mode='Markdown'
-            ),
-            reply_markup=markup,
-            description='You are not a premium user, your message will be available for everyone',
-            thumb_url='https://i.imgur.com/FkPJjhk.jpg',
-        )
-        await inline_query.answer([non_premium_item], cache_time=0)
+        temp_memory[user_id] = text
+        await inline_query.answer([inline_messages.BROKE_MESSAGE], cache_time=0)
 
 
 @dp.chosen_inline_handler()
 async def chosen_result(chosen_inline: ChosenInlineResult):
     result_id = chosen_inline.result_id
     inline_id = chosen_inline.inline_message_id
-    if result_id != 'prem' or inline_id is None:
+    if result_id not in ['prem', 'non-prem'] or inline_id is None:
         return
     user_id = chosen_inline.from_user.id
+    raw_json: dict = loads(chosen_inline.from_user.as_json())
 
     ref = db.reference('/messages')
-    key = ref.push(temp_memory[user_id]).key
+    key = ref.push({'text': temp_memory[user_id], 'premium': is_premium(raw_json)}).key
 
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton(text='Read this message', callback_data=key))
@@ -109,14 +74,16 @@ async def chosen_result(chosen_inline: ChosenInlineResult):
 async def question_menu_callback(callback_query: CallbackQuery):
     raw_json: dict = loads(callback_query.from_user.as_json())
     callback_data = callback_query.data
+    message: OrderedDict = db.reference('/messages/' + callback_data).get()
 
-    if not is_premium(raw_json):
-        await callback_query.answer('You must subscribe to Telegram Premium™ to read this message', show_alert=True)
-    elif callback_data == 'wait':
+    if callback_data == 'wait':
         await callback_query.answer('Please wait a second to see the result', show_alert=False)
+    elif is_premium(raw_json) == message.get('premium', True):
+        await callback_query.answer(str(message.get('text')), show_alert=True)
+    elif is_premium(raw_json):
+        await callback_query.answer('You are too rich to read this message', show_alert=True)
     else:
-        ref = db.reference('/messages/' + callback_data)
-        await callback_query.answer(str(ref.get()), show_alert=True)
+        await callback_query.answer('You must subscribe to Telegram Premium™ to read this message', show_alert=True)
 
 
 @dp.message_handler(commands=['remove_keyboard'])
