@@ -130,3 +130,6 @@ dmypy.json
 
 # Database
 firebase.json
+
+# Test files
+sandbox.py

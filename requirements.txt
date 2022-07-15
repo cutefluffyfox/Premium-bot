@@ -1,3 +1,5 @@
 python-dotenv==0.19.2
 aiogram==2.20
 firebase_admin==5.2.0
+requests~=2.25.1
+beautifulsoup4~=4.11.1

@@ -2,12 +2,13 @@ import asyncio
 from os import getenv
 import logging
 from json import loads
-from collections import OrderedDict
+import requests
+from bs4 import BeautifulSoup
 
 from aiogram import Bot, Dispatcher, executor
-from aiogram.types import InlineQuery, InputTextMessageContent, InlineQueryResultArticle, ChosenInlineResult
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ReplyKeyboardMarkup, \
-    KeyboardButton
+from aiogram.types import InlineQuery, ChosenInlineResult
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import CallbackQuery, Message
 
 import firebase_admin
@@ -42,7 +43,7 @@ async def inline_echo(inline_query: InlineQuery):
     temp_memory[inline_query.from_user.id] = ''
 
     if len(text) == 0:
-        await inline_query.answer([inline_messages.EMPTY_MESSAGE], cache_time=0)
+        await inline_query.answer([inline_messages.EMPTY_MESSAGE, inline_messages.BEER_MESSAGE], cache_time=0)
     elif len(text) >= 200:
         await inline_query.answer([inline_messages.TOO_LONG], cache_time=0)
     elif is_premium(raw_json):
@@ -57,6 +58,11 @@ async def inline_echo(inline_query: InlineQuery):
 async def chosen_result(chosen_inline: ChosenInlineResult):
     result_id = chosen_inline.result_id
     inline_id = chosen_inline.inline_message_id
+    if result_id == 'beer':
+        beer_generator = requests.get('https://www.flickriver.com/groups/worldbeer/pool/random/')
+        bs = BeautifulSoup(beer_generator.content, 'html.parser')
+        link = bs.find(id='photo-panel-1').find('img')['src']
+        return await bot.edit_message_text(inline_message_id=inline_id, text=link, disable_web_page_preview=False)
     if result_id not in ['prem', 'non-prem', 'limited'] or inline_id is None:
         return
     user_id = chosen_inline.from_user.id

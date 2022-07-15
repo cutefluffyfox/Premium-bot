@@ -44,9 +44,10 @@ BROKE_MESSAGE = InlineQueryResultArticle(
 )
 
 LIMITED_MARKUP = InlineKeyboardMarkup().add(InlineKeyboardButton(text='Read this message', callback_data='waitLimit'))
+WAIT_MARKUP = InlineKeyboardMarkup().add(InlineKeyboardButton(text='Wait', callback_data='wait'))
 
 LIMITED_READ_MESSAGE = InlineQueryResultArticle(
-    id='limited',
+    id='wait',
     title=f'Send message with limited life',
     input_message_content=InputTextMessageContent(
         f'This message is *exclusive*. It could be seen only limited amount of times!',
@@ -55,4 +56,17 @@ LIMITED_READ_MESSAGE = InlineQueryResultArticle(
     reply_markup=LIMITED_MARKUP,
     description='To set limit number write message like `number message` (default is 1)',
     thumb_url='https://i.imgur.com/5xndy07.jpg',
+)
+
+BEER_MESSAGE = InlineQueryResultArticle(
+    id='beer',
+    title=f'Get random beer photo',
+    input_message_content=InputTextMessageContent(
+        'Pouring beer...',
+        parse_mode='Markdown',
+        disable_web_page_preview=False
+    ),
+    reply_markup=WAIT_MARKUP,
+    description='Get random beer photo!',
+    thumb_url='https://i.imgur.com/Cx3Is9r.jpg',
 )
