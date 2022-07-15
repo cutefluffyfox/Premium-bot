@@ -47,7 +47,7 @@ LIMITED_MARKUP = InlineKeyboardMarkup().add(InlineKeyboardButton(text='Read this
 WAIT_MARKUP = InlineKeyboardMarkup().add(InlineKeyboardButton(text='Wait', callback_data='wait'))
 
 LIMITED_READ_MESSAGE = InlineQueryResultArticle(
-    id='wait',
+    id='limited',
     title=f'Send message with limited life',
     input_message_content=InputTextMessageContent(
         f'This message is *exclusive*. It could be seen only limited amount of times!',

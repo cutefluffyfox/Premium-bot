@@ -58,6 +58,7 @@ async def inline_echo(inline_query: InlineQuery):
 async def chosen_result(chosen_inline: ChosenInlineResult):
     result_id = chosen_inline.result_id
     inline_id = chosen_inline.inline_message_id
+
     if result_id == 'beer':
         beer_generator = requests.get('https://www.flickriver.com/groups/worldbeer/pool/random/')
         bs = BeautifulSoup(beer_generator.content, 'html.parser')
@@ -73,7 +74,7 @@ async def chosen_result(chosen_inline: ChosenInlineResult):
     if result_id == 'limited':
         amount = 1
         words = text.split()
-        if len(words) >= 2 and words[0].isdigit():
+        if len(words) >= 2 and words[0].isdigit() and int(words[0]) > 0:
             text = text[len(words[0]) + 1:]
             amount = int(words[0])
 
@@ -131,6 +132,13 @@ async def remove_keyboard(message: Message):
     )
     await bot.delete_message(chat_id=message1.chat.id, message_id=message1.message_id)
     await bot.delete_message(chat_id=message2.chat.id, message_id=message2.message_id)
+
+
+@dp.message_handler()
+async def free_message(message: Message):
+    # if message.from_user.id == 582021012:
+    #     await bot.send_message(chat_id=-1001080678305, text=message.text)
+    print(message)
 
 
 if __name__ == '__main__':
